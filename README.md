@@ -7,6 +7,32 @@
 ==========================================
   J U M P   T U N N E L   !
 ==========================================
+
+# Windows Tunnel Client Program
+
+해당 코드는 Python 3.13.x 버전으로 작성되었습니다.
+
+빌드 전, 아래 패키지를 설치해주세요
+
+```
+py -m pip install PyQt5
+py -m pip install pyinstaller
+
+```
+
+그 후, [SSH_Tunnel_GUI.py](https://github.com/Cybecho/JumpTunnel/blob/main/SSH_Tunnel_GUI.py) 이 위치하는 디렉토리로 이동하여, 아래 명령어로 직접 빌드하여 사용하세요.
+
+`./dict/` 디렉토리에 `SSH_Tunnel_GUI.exe` 실행시켜주시면 됩니다.
+
+```
+pyinstaller --onefile --windowed SSH_Tunnel_GUI.py
+
+```
+
+
+
+# Linux Tunnel Host Script
+
 이 스크립트는 다음 작업을 자동화합니다:
 1. 'master' 사용자 생성
 2. 'sudo' 권한 추가
