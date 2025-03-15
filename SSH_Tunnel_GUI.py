@@ -99,7 +99,7 @@ class TunnelGUI(QWidget):
         h_layout.addWidget(QLabel("Proxy Jump IP"))
         h_layout.addWidget(ip_edit)
         
-        delete_btn = QPushButton("�️ 삭제")
+        delete_btn = QPushButton("🗑️ 삭제")
         delete_btn.clicked.connect(
             lambda: self.remove_router(h_layout, (name_edit, ip_edit, delete_btn))
         )
@@ -122,37 +122,53 @@ class TunnelGUI(QWidget):
     def add_leafnode(self):
         """
         Leaf Node(최종 노드)를 추가하는 레이아웃.
-        - 포트(기본 22)도 입력받도록 수정
+        - SSH 포트와 포워딩할 포트 정보 추가
         """
         name_edit = QLineEdit()
         ip_edit = QLineEdit()
         router_combo = QComboBox()
         router_combo.addItems([r[0].text() for r in self.proxy_routers])
 
-        # LeafNode 별 Port 지정 가능
-        port_spinbox = QSpinBox()
-        port_spinbox.setMaximum(65535)
-        port_spinbox.setValue(22)  # 기본 22로 설정
+        # SSH 포트 설정
+        ssh_port_spinbox = QSpinBox()
+        ssh_port_spinbox.setMaximum(65535)
+        ssh_port_spinbox.setValue(22)  # 기본 22로 설정
+
+        # 로컬 포트 설정 (포워딩할 로컬 포트)
+        local_port_spinbox = QSpinBox()
+        local_port_spinbox.setMaximum(65535)
+        local_port_spinbox.setValue(8080)  # 기본 8080으로 설정
+
+        # 리모트 포트 설정 (포워딩할 대상 포트)
+        remote_port_spinbox = QSpinBox()
+        remote_port_spinbox.setMaximum(65535)
+        remote_port_spinbox.setValue(8080)  # 기본 8080으로 설정
 
         h_layout = QHBoxLayout()
         h_layout.addWidget(QLabel("Leaf 이름"))
         h_layout.addWidget(name_edit)
         h_layout.addWidget(QLabel("Leaf IP"))
         h_layout.addWidget(ip_edit)
-        h_layout.addWidget(QLabel("Attached Router"))
+        h_layout.addWidget(QLabel("Router"))
         h_layout.addWidget(router_combo)
-        h_layout.addWidget(QLabel("Leaf Port"))
-        h_layout.addWidget(port_spinbox)
+        h_layout.addWidget(QLabel("SSH Port"))
+        h_layout.addWidget(ssh_port_spinbox)
+        h_layout.addWidget(QLabel("Local Port"))
+        h_layout.addWidget(local_port_spinbox)
+        h_layout.addWidget(QLabel("Remote Port"))
+        h_layout.addWidget(remote_port_spinbox)
 
-        delete_btn = QPushButton("�️ 삭제")
+        delete_btn = QPushButton("🗑️ 삭제")
         delete_btn.clicked.connect(
-            lambda: self.remove_leafnode(h_layout, (name_edit, ip_edit, router_combo, port_spinbox, delete_btn))
+            lambda: self.remove_leafnode(h_layout, (name_edit, ip_edit, router_combo, 
+                                                  ssh_port_spinbox, local_port_spinbox, 
+                                                  remote_port_spinbox, delete_btn))
         )
         h_layout.addWidget(delete_btn)
 
         self.leaf_layout.addLayout(h_layout)
-        # leaf_nodes 배열에 port_spinbox도 함께 저장
-        self.leaf_nodes.append((name_edit, ip_edit, router_combo, port_spinbox, delete_btn))
+        self.leaf_nodes.append((name_edit, ip_edit, router_combo, ssh_port_spinbox, 
+                               local_port_spinbox, remote_port_spinbox, delete_btn))
 
     def remove_leafnode(self, layout, leaf_data):
         self.leaf_nodes.remove(leaf_data)
@@ -212,16 +228,17 @@ class TunnelGUI(QWidget):
                        f"    IdentityFile {identity_path}\n\n")
             prev_router = rname.text()
 
-        # 3) Leaf Nodes 설정 (포트 직접 입력)
-        for lname, lip, combo, port_spinbox, _ in self.leaf_nodes:
+        # 3) Leaf Nodes 설정 (포트 포워딩 포함)
+        for lname, lip, combo, ssh_port, local_port, remote_port, _ in self.leaf_nodes:
             attached_router = combo.currentText()
             config += (
                 f"Host {lname.text()}\n"
                 f"    HostName {lip.text()}\n"
-                f"    Port {port_spinbox.value()}\n"
+                f"    Port {ssh_port.value()}\n"
                 f"    User master\n"
                 f"    ProxyJump {attached_router}\n"
-                f"    IdentityFile {identity_path}\n\n"
+                f"    IdentityFile {identity_path}\n"
+                f"    LocalForward {local_port.value()} localhost:{remote_port.value()}\n\n"
             )
 
         # 생성된 config 파일 저장
